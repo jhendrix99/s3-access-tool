@@ -2,9 +2,12 @@ import os
 import logging
 import boto3
 import botocore
+import platform
+import time
 from botocore.exceptions import ClientError
 
 s3 = boto3.resource('s3')
+global buckets_list
 buckets_list = []
 file_list = []
 global counter 
@@ -54,6 +57,7 @@ def delete_bucket(bucket):
     counter = 0
     for item in bucket.objects.all():
         counter += 1
+    print(counter)
     if counter >= 1:
         print("Bucket is not empty, deleting all files.")
         for item in bucket.objects.all():
@@ -72,7 +76,16 @@ def download_file(bucket, objectkey):
         else:
             raise
 
+def clear_console():
+    if platform.system() == "Windows":
+        os.system('cls')
+    else:
+        os.system()
+
 def menu_options():
+    buckets_list = []
+    for buckets in s3.buckets.all():
+        buckets_list.append(buckets.name)
     counter = 0
     print("Welcome to the basic S3 client!")
     print(" 1. Create New Bucket \n 2. Upload New File \n 3. Delete an Existing File \n 4. Download File \n 5. Delete Bucket(Dangerous)")
@@ -82,10 +95,14 @@ def menu_options():
     if menu_selection == 1:
         bucket_name = input("What would you like the new bucket to be called? \n")
         create_bucket(bucket_name)
+        print("Bucket: ", bucket_name, " has been created!")
+        time.sleep(3)
+        clear_console()
+        menu_options()
 
     #upload file option
     elif menu_selection == 2:
-        
+        print("THIS IS HAVING ISSUES ON WINDOWS")
         #checking number of buckets to figure out what to do        
         if len(buckets_list) == 0:
             bucketName = input("No buckets currently exist, please create one: ")
@@ -106,7 +123,9 @@ def menu_options():
         print("Uploading your file, please wait...")
         upload_file(file_name, bucket)
         print("Upload Complete!")
-
+        time.sleep(3)
+        clear_console()
+        menu_options()
     #Delete an object option
     elif menu_selection == 3:
         curcount = 0
@@ -123,10 +142,15 @@ def menu_options():
             curcount += 1
         if curcount == 0:
             print("No files found in bucket:", bucket.name)
-            exit()
+            time.sleep(3)
+            clear_console()
+            menu_options()
         objectkey = input("Which file would you like to delete?(Select a number): ")
         delete_object(bucketName, file_list[int(objectkey)])
         print("The file was deleted!")
+        time.sleep(3)
+        clear_console()
+        menu_options()
     elif menu_selection == 4:
         curcount = 0
         for bucket in buckets_list:
@@ -142,10 +166,15 @@ def menu_options():
             curcount += 1
         if curcount == 0:
             print("No files found in bucket:", bucket.name)
-            exit()
+            time.sleep(3)
+            clear_console()
+            menu_options()
         objectkey = input("Which file would you like to download?(Select number): ")
         download_file(bucket, file_list[int(objectkey)])
         print("File: ", file_list[int(objectkey)], " has been downloaded!")
+        time.sleep(3)
+        clear_console()
+        menu_options()
     elif menu_selection == 5:
         curcount = 0
         for bucket in buckets_list:
@@ -155,10 +184,14 @@ def menu_options():
         bucketName = buckets_list[int(bucketName)]
         bucket = s3.Bucket(bucketName)
         print("Running this command will permanently remove all files in the bucket and the bucket itself.")
-        verify = input("Are you sure you want to remove this bucket and all of its contents? Type '"'permanently delete'"'")
+        verify = input("Are you sure you want to remove this bucket and all of its contents? Type '"'permanently delete'"' \n")
         if verify.upper() == "PERMANENTLY DELETE":
             delete_bucket(bucket)
         else:
             print("Aborting...")
-            exit()
+        time.sleep(3)
+        clear_console()
+        menu_options()
+    else:
+        exit()
 menu_options()
