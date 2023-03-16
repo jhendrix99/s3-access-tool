@@ -50,6 +50,19 @@ def delete_object(bucket, objectKey):
     s3.Object(bucket, objectKey).delete()
     print("Removing: ", objectKey)
 
+def delete_bucket(bucket):
+    counter = 0
+    for item in bucket.objects.all():
+        counter += 1
+    if counter >= 1:
+        print("Bucket is not empty, deleting all files.")
+        for item in bucket.objects.all():
+            bucket.Object(item.key).delete()
+            print("Deleting: ", item.key)
+        print("All items have been removed, now deleting bucket.")
+    bucket.delete()
+    print("Bucket deleted!")
+
 def download_file(bucket, objectkey):
     try:
         bucket.download_file(objectkey, objectkey)
@@ -62,8 +75,8 @@ def download_file(bucket, objectkey):
 def menu_options():
     counter = 0
     print("Welcome to the basic S3 client!")
-    print(" 1. Create New Bucket \n 2. Upload New File \n 3. Delete an Existing File \n 4. Download File")
-    menu_selection = input("What would you like to do?(1-4): ")
+    print(" 1. Create New Bucket \n 2. Upload New File \n 3. Delete an Existing File \n 4. Download File \n 5. Delete Bucket(Dangerous)")
+    menu_selection = input("What would you like to do?(1-5): ")
     menu_selection = int(menu_selection)
     #Create bucket option
     if menu_selection == 1:
@@ -133,4 +146,19 @@ def menu_options():
         objectkey = input("Which file would you like to download?(Select number): ")
         download_file(bucket, file_list[int(objectkey)])
         print("File: ", file_list[int(objectkey)], " has been downloaded!")
+    elif menu_selection == 5:
+        curcount = 0
+        for bucket in buckets_list:
+            print(curcount, " ", bucket)
+            curcount += 1
+        bucketName = input("Which bucket would you like to remove?(Select Number): ")
+        bucketName = buckets_list[int(bucketName)]
+        bucket = s3.Bucket(bucketName)
+        print("Running this command will permanently remove all files in the bucket and the bucket itself.")
+        verify = input("Are you sure you want to remove this bucket and all of its contents? Type '"'permanently delete'"'")
+        if verify.upper() == "PERMANENTLY DELETE":
+            delete_bucket(bucket)
+        else:
+            print("Aborting...")
+            exit()
 menu_options()
