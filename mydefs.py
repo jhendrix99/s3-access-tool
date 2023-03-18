@@ -12,6 +12,7 @@ global counter
 global region
 bucket_list = []
 file_list = []
+upload_list = []
 locations_literal = ["us-east-1", "us-east-2", "us-west-1", "us-west-2"]
 locations_nice = ["US East 1 - N. Virginia", "US East 2 - Ohio", "US West 1 - N. California", "US West 2 - Oregon"]
 location = locations_literal[1]
@@ -54,13 +55,15 @@ def delete_bucket(bucket):
     for items in bucket.objects.all():
         counter += 1
     mathcounter = counter
+    print(mathcounter)
     if counter >= 1:
         print("Bucket is not empty, removing all objects.")
+        counter = 0
         for items in bucket.objects.all():
             counter += 1
             print("Deleting: ", items.key)
-            print(int((counter / mathcounter)*100), "% Done...")
-            bucket.object(items.key).delete()
+            print("(" + str(counter) + "/" + str(mathcounter) + ")", int((counter / mathcounter)*100), "% Done...")
+            bucket.Object(items.key).delete()
             time.sleep(1)
         print("All objects have been removed, now removing the bucket.")
     bucket.delete()
@@ -86,6 +89,15 @@ def download_file(bucket, objectkey):
             print("The object does not exist.")
         else:
             raise
+
+def upload_folder_contents(bucket):
+    s3 = boto3.client('s3')
+    counter = 0
+    for file in upload_list:
+        print("Uploading:", os.path.basename(upload_list[counter]))
+        s3.upload_file(upload_list[counter], bucket, os.path.basename(upload_list[counter]))
+        counter += 1
+        time.sleep(1)
 
 def clear_console():
     if platform.system() == "Windows":

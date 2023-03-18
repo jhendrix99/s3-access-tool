@@ -4,16 +4,21 @@ import time
 def main_menu():
     bucket_list = []
     mydefs.clear_console()
-    print("Basic S3 Control Tool - Welcome, " + mydefs.os.getlogin() + ".")
-    print(" 1. Create Bucket \n 2. Delete Bucket(Dangerous) \n 3. Upload File \n 4. Download File \n 5. Delete File")
-    menu_selection = input("What would you like to do?(1-5): \n -> ")
+    print("Basic S3 Control Tool - Welcome, " + mydefs.os.getlogin().title() + 
+    ". \n 1. Create Bucket \n 2. Delete Bucket(Dangerous) \n 3. Upload File \n 4. Download File \n 5. Delete File \n 6. Upload Folder Contents(Experimental)")
+    menu_selection = input("What would you like to do?(1-6): \n -> ")
     menu_selection = int(menu_selection)
     if menu_selection == 1:
+        mydefs.clear_console()
         location = mydefs.select_location()
         print(str(location))
         bucket_name = input("What would you like the new bucket to be called? \n -> ")
         mydefs.create_bucket(bucket_name, location)
+        time.sleep(3)
+        mydefs.clear_console()
+        main_menu()
     elif menu_selection == 2:
+        mydefs.clear_console()
         bucket_list = []
         bucket_list = mydefs.load_buckets()
         if len(bucket_list) == 0:
@@ -37,13 +42,8 @@ def main_menu():
         mydefs.clear_console()
         main_menu()
     elif menu_selection == 3:
+        mydefs.clear_console()
         bucket_list = mydefs.load_buckets()
-        if len(bucket_list) == 0:
-            print("No buckets found. Please make a new bucket first.")
-            time.sleep(3)
-            mydefs.clear_console()
-            main_menu()
-
         #checking number of buckets to figure out what to do        
         if len(bucket_list) == 0:
             bucket = input("No buckets currently exist, please create one: \n -> ")
@@ -58,15 +58,18 @@ def main_menu():
             bucket = bucket_list[int(bucket)]
 
         file_name = input("Enter the location of the file to upload: ")
+        #mydefs.upload_list.append(file_name)
         print("You selected: ", mydefs.os.path.basename(file_name))
-
-        print("Uploading your file, please wait...")
-        mydefs.upload_file(file_name, bucket)
-        print("Upload Complete!")
-        time.sleep(3)
-        mydefs.clear_console()
+        while file_name != "":
+            print("Uploading your file, please wait...")
+            mydefs.upload_file(file_name, bucket)
+            print("Upload Complete!")
+            time.sleep(1)
+            mydefs.clear_console()
+            file_name = input("Next File(Leave blank to quit): ")
         main_menu()
     elif menu_selection == 4:
+        mydefs.clear_console()
         bucket_list = mydefs.load_buckets()
         if len(bucket_list) == 0:
             print("No data found, going back to main menu.")
@@ -97,6 +100,7 @@ def main_menu():
         mydefs.clear_console()
         main_menu()
     elif menu_selection == 5:
+        mydefs.clear_console()
         bucket_list = mydefs.load_buckets()
         if len(bucket_list) == 0:
             print("No buckets found.")
@@ -105,7 +109,7 @@ def main_menu():
             main_menu()
         curcount = 0
         for bucket in bucket_list:
-            print(curcount, " ", bucket)
+            print(mydefs.get_location(bucket), "\n", curcount, " ", bucket)
             curcount += 1
 
         bucketName = input("Which bucket would you like to access?(Select Number): ")
@@ -122,5 +126,41 @@ def main_menu():
         time.sleep(1)
         mydefs.clear_console()
         main_menu()
+    elif menu_selection == 6:
+        mydefs.clear_console()
+        bucket_list = mydefs.load_buckets()
+        #checking number of buckets to figure out what to do        
+        if len(bucket_list) == 0:
+            print("No buckets currently exist, select a location.")
+            location = mydefs.select_location()
+            bucket = input("Bucket name: \n -> ")
+            print("You chose: ", bucket)
+            mydefs.create_bucket(bucket, location)
+        else:
+            curcount = 0
+            for bucket in bucket_list:
+                print(mydefs.get_location(bucket), "\n", curcount, " ", bucket)
+                curcount += 1
+            bucket = input("Which bucket would you like to access?(Select Number): ")
+            bucket = bucket_list[int(bucket)]
+
+        dir = input("Enter the folder location to upload: ")
+        for path in mydefs.os.listdir(dir):
+            # check if current path is a file
+            if mydefs.os.path.isfile(mydefs.os.path.join(dir, path)):
+                mydefs.upload_list.append(str(mydefs.os.path.join(dir, path)))
+                print(mydefs.os.path.join(dir, path), "Has been added to upload list!")
+        if len(mydefs.upload_list) == 0:
+            print("No files in the folder.")
+            time.sleep(3)
+            mydefs.clear_console()
+            main_menu()
+        else:
+            print("Uploading now...")
+            mydefs.upload_folder_contents(bucket, )
+            print("All files uploaded!")
+            time.sleep(3)
+            mydefs.clear_console()
+            main_menu()
 
 main_menu()
